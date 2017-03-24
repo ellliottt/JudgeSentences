@@ -11,7 +11,21 @@
 9. [SENSE2VEC](https://arxiv.org/pdf/1511.06388.pdf)
 10. [spacy](https://spacy.io/docs/usage/tutorials)
 11. [NLP ox](https://github.com/oxford-cs-deepnlp-2017/lectures)
+12. [Yelp NLP case](https://github.com/skipgram/modern-nlp-in-python/tree/master/executable)
+13. [spicy](https://spacy.io/docs/usage/training)
 
+
+# some reference
+
+1. [Encoding Sentences with Graph Convolutional Networks
+for Semantic Role Labeling](https://arxiv.org/pdf/1703.04826.pdf)
+2. [Sparse Named Entity Classification using Factorization Machines](https://arxiv.org/pdf/1703.04879.pdf)
+3. [Deep Learning applied to NLP](https://arxiv.org/pdf/1703.03091.pdf)
+4. [Thumbs up? Sentiment Classification using Machine Learning
+Techniques](https://arxiv.org/pdf/cs/0205070.pdf)
+5. [Opinion mining and sentiment analysis](http://www.cs.cornell.edu/home/llee/omsa/omsa.pdf)
+6. [Deep Learning, NLP, and Representations](http://colah.github.io/posts/2014-07-NLP-RNNs-Representations/)
+7. [ICML 2015](http://icml.cc/2015/?page_id=97)
 
 # Someuseful idea
 

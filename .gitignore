@@ -8,6 +8,7 @@ rawdata
 Thumbs.db
 .csv
 data
+datasets
 # Directories.
 datasets/__pycache__/
 deployment/__pycache__/
