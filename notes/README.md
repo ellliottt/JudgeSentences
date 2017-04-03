@@ -36,6 +36,8 @@ Techniques](https://arxiv.org/pdf/cs/0205070.pdf)
 Techniques](https://arxiv.org/pdf/cs/0205070.pdf)
 13. [Human bias detection](https://nlp.stanford.edu/pubs/neutrality.pdf)
 14. [attention based](http://www.aclweb.org/anthology/D16-1058)
+15. [tensorflow attension](https://github.com/ilivans/tf-rnn-attention)
+16. []
 
 
 
