@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils.np_utils import to_categorical
+from keras.callbacks import ModelCheckpoint
 from keras.models import model_from_json
 from keras.layers import Embedding
 from keras.layers import Dense, Input, Flatten
