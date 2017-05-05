@@ -123,7 +123,7 @@ model = Model(review_input, preds)
 
 model.compile(loss='mean_squared_error',
               optimizer='adam',
-              metrics=['acc'])
+              metrics=['mse','mae'])
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
