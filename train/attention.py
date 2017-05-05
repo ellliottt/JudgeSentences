@@ -127,7 +127,7 @@ model.compile(loss='mean_squared_error',
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 1000, batch_size=32)
+        nb_epoch = 1000, batch_size=4)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
@@ -137,12 +137,12 @@ model.save_weights("../datasets/lstmdata/model.h5")
 
 # summarize history for accuracy
 fig = plt.figure()
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
-plt.title('model accuracy')
-plt.ylabel('accuracy')
+plt.plot(history.history['mse'])
+plt.plot(history.history['mae'])
+plt.title('model error')
+plt.ylabel('error')
 plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
+plt.legend(['mse', 'mae'], loc='upper left')
 fig.savefig('../result/accuracy.png')
 # summarize history for loss
 fig = plt.figure()
