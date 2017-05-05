@@ -133,7 +133,7 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 5, batch_size=4, callbacks=callbacks_list, verbose=0)
+        nb_epoch = 5, batch_size=4, callbacks=callbacks_list, verbose=1)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
