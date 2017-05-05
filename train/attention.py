@@ -7,6 +7,7 @@ import gensim
 import pandas as pd
 import numpy as np
 import os
+import os.path
 from glob import glob
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -73,8 +74,9 @@ MAX_NB_WORDS = 500000
 # In[21]:
 
 model = word2vec.Word2Vec.load('../datasets/word2vec.model')
-
-
+filepath="../datasets/lstmdata/weights.best.hdf5"
+if os.path.isfile(filepath):
+    model.load_weights(filepath)
 # In[ ]:
 
 texts = pd.read_pickle('../datasets/lstmdata/textsfortoken.pkl')
@@ -125,9 +127,12 @@ model.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['mse','mae'])
 
+checkpoint = ModelCheckpoint(filepath, monitor='val_mse', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
+
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 1000, batch_size=4)
+        nb_epoch = 5, batch_size=4,, callbacks=callbacks_list, verbose=0)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
