@@ -10,6 +10,7 @@ import gensim
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn import linear_model
+from sklearn import cross_decomposition
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2, f_regression
@@ -120,14 +121,14 @@ class textfeature():
 		feature_names = self.vectorizer.get_feature_names()
 		return [id2ngram[feature_names[i]] for i in f_reg.get_support(indices = True)]
 		
-	def model_pre(self, reg, X_train, X_test, scale = 1.0):
+	def model_pre(self, reg, X_train, X_test, scale = 1.0, dataset = 'Holger', model_name = 'regression'):
 		#self.model = reg()
 		y_train = np.array(list(self.train_y_dict.values())) * scale
 		y_test = np.array(list(self.test_y_dict.values())) * scale
 		reg.fit(X_train, y_train)
 		y_pre = reg.predict(X_test)
 		self.acc = np.mean((y_pre - y_test) ** 2)
-		print(("Mean squared error: %.4f" % self.acc))
+		print(("Mean squared error for dataset %s on %s : %.4f" % (dataset, model_name, self.acc)))
 		return y_pre
 
 	def plot_scatter(self, y_pre, save_path = '../result/', scale = 1.0, name = 'bow_feature.png'):
@@ -136,13 +137,20 @@ class textfeature():
 		plt.scatter(y_test, y_pre)
 		plt.xlabel('true value')
 		plt.ylabel('prediction value')
-		savename = save_path + name
+		savename = save_path + name +'.png'
 		fig.savefig(savename)
 
 	def run_model(self, train_data, test_data, judge_year_index,
-				  features, model = 'reg', plot_name = 'bow_features'):
-		self.process_data(train_data, judge_year_index, features, istrain = True)
-		self.process_data(test_data, judge_year_index, features, istrain = False)
+				  features, model_zoo, plot_name = 'bow_features', 
+				  drops = ['judgeid', 'demean_harshness','sentyr'],
+				  y_label = 'demean_harshness', 
+				  dataset = 'Holger', model_name = 'OLS'):
+		self.process_data(train_data, judge_year_index, features, 
+						  istrain = True, drops = drops,
+						  y_label = y_label)
+		self.process_data(test_data, judge_year_index, features, 
+						  istrain = False, drops = drops,
+						  y_label = y_label)
 		self.get_train_test(features)
 		bow_train, bow_test = self.get_vector()
 		X_train, X_test = self.get_tfidf(bow_train, bow_test)
@@ -150,11 +158,10 @@ class textfeature():
 
 
 		## model test
-		regr_bow = linear_model.LinearRegression()
-		y_pre = self.model(regr_bow, train_total, test_total)
+		y_pre = self.model_pre(model_zoo[model_name], train_total, test_total, dataset = dataset, model_name = model_name)
 
 		## plot
-		self.plot_scatter(y_pre, name = plot_name)
+		self.plot_scatter(y_pre, name = plot_name+'_'+model_name+'_'+dataset)
 
 if __name__ == '__main__':
 	ngrams = textfeature()
@@ -163,30 +170,21 @@ if __name__ == '__main__':
 	train_data = ngrams.load_data('../holger_train_judgeyear.csv',index_col=0)
 	test_data = ngrams.load_data('../holger_test_judgeyear.csv', index_col=0)
 	judge_year_index = ngrams.load_data('../datasets/judge_year2index.pkl', format = 'pkl')
-	ngram_dict = ngrams.load_data('../datasets/grams_dict/grams_dict.pkl', format = 'pkl')
+	ngram_dict = ngrams.load_data('../datasets/grams_dict2002-2016/grams_dict.pkl', format = 'pkl')
 
-	bow_feature = ngrams.load_data('../datasets/bow_features.pkl', format = 'pkl')
-	bi_feature = ngrams.load_data('../datasets/2grams_feature.pkl', format = 'pkl')
-	tri_feature = ngrams.load_data('../datasets/3grams_feature.pkl', format = 'pkl')
-	for_feature = ngrams.load_data('../datasets/4grams_feature.pkl', format = 'pkl')
-	fiv_feature = ngrams.load_data('../datasets/5grams_feature.pkl', format = 'pkl')
+	bow_feature = ngrams.load_data('../datasets/grams_dict2002-2016/bow_features.pkl', format = 'pkl')
+	bi_feature = ngrams.load_data('../datasets/grams_dict2002-2016/2grams_feature.pkl', format = 'pkl')
+	tri_feature = ngrams.load_data('../datasets/grams_dict2002-2016/3grams_feature.pkl', format = 'pkl')
+	for_feature = ngrams.load_data('../datasets/grams_dict2002-2016/4grams_feature.pkl', format = 'pkl')
+	fiv_feature = ngrams.load_data('../datasets/grams_dict2002-2016/5grams_feature.pkl', format = 'pkl')
 
-	'''
-	ngrams.process_data(train_data, judge_year_index, features, istrain = True)
-	ngrams.process_data(test_data, judge_year_index, features, istrain = False)
-	ngrams.get_train_test(features)
-	bow_train, bow_test = ngrams.get_vector()
-	X_train, X_test = ngrams.get_tfidf(bow_train, bow_test)
-	train_total, test_total = ngrams.combine_data(X_train, X_test)
+	model_zoo = Counter()
+	model_zoo['OLS'] = linear_model.LinearRegression()
+	model_zoo['PLS'] = cross_decomposition.PLSRegression(n = 200)
+	model_zoo['RF']  = RandomForestRegressor()
+	model_zoo['Elastic Net'] = linear_model.ElasticNet(alpha=0.1, l1_ratio=0.7)
+	
 
-
-	## model test
-	regr_bow = linear_model.LinearRegression()
-	y_pre = ngrams.model(regr_bow, train_total, test_total)
-
-	## plot
-	ngrams.plot_scatter(y_pre, name = features_n[i])
-	'''
 	ngrams.run_model(train_data, test_data, judge_year_index, bow_feature)
 
 

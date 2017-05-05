@@ -27,5 +27,6 @@ logs/
 __pycache__/
 
 *.log
-
+compress
+*.zip
 checkpoints/VGG_VOC0712_SSD_*
