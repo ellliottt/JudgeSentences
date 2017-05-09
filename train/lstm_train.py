@@ -67,7 +67,7 @@ word_index = tokenizer.word_index
 embedding_matrix = np.random.random((len(word_index) + 1, EMBEDDING_DIM))
 for word, i in word_index.items():
     try:
-        embedding_vector = model.wv[word]
+        embedding_vector = model.wv[word].tolist() * 3
         if embedding_vector is not None:
             # words not found in embedding index will be all-zeros.
             embedding_matrix[i] = embedding_vector

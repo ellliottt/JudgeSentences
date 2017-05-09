@@ -5,7 +5,7 @@ import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 
-EMBEDDING_DIM = 100
+EMBEDDING_DIM = 300
 texts = pd.read_pickle('datasets/lstmdata/textsfortoken.pkl')
 
 class MySentences(object):
@@ -21,4 +21,4 @@ model = word2vec.Word2Vec(sentences, size = EMBEDDING_DIM)
 
 
 
-model.save('datasets/word2vec.model')
+model.save('datasets/word2vec_300.model')
