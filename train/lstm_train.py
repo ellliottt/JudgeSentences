@@ -42,13 +42,13 @@ print('load datasets sucessfully')
 
 # In[20]:
 
-EMBEDDING_DIM = 300
-MAX_SENTS = 500
-MAX_SENT_LEN = 100
+EMBEDDING_DIM = 200
+MAX_SENTS = 100
+MAX_SENT_LEN = 30
 MAX_NB_WORDS = 500000
 
-lstm_train = lstm_train[:,:MAX_SENTS,:]
-lstm_test = lstm_test[:,:MAX_SENTS,:]
+lstm_train = lstm_train[:,:MAX_SENTS,:MAX_SENT_LEN]
+lstm_test = lstm_test[:,:MAX_SENTS,:MAX_SENT_LEN]
 
 # In[21]:
 
@@ -67,7 +67,7 @@ word_index = tokenizer.word_index
 embedding_matrix = np.random.random((len(word_index) + 1, EMBEDDING_DIM))
 for word, i in word_index.items():
     try:
-        embedding_vector = model.wv[word].tolist() * 3
+        embedding_vector = model.wv[word].tolist()  *2
         if embedding_vector is not None:
             # words not found in embedding index will be all-zeros.
             embedding_matrix[i] = embedding_vector
@@ -108,7 +108,7 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 200, batch_size=1, callbacks=callbacks_list, verbose=1)
+        nb_epoch = 200, batch_size=16, callbacks=callbacks_list, verbose=1)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
