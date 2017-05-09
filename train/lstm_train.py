@@ -11,6 +11,7 @@ import os.path
 from glob import glob
 from collections import Counter
 import matplotlib.pyplot as plt
+import pickle
 
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 from keras.preprocessing.sequence import pad_sequences
@@ -28,31 +29,6 @@ from keras.engine.topology import Layer, InputSpec
 
 from keras import initializations
 
-class AttLayer(Layer):
-    def __init__(self, **kwargs):
-        self.init = initializations.get('normal')
-        #self.input_spec = [InputSpec(ndim=3)]
-        super(AttLayer, self).__init__(**kwargs)
-
-    def build(self, input_shape):
-        assert len(input_shape)==3
-        #self.W = self.init((input_shape[-1],1))
-        self.W = self.init((input_shape[-1],))
-        #self.input_spec = [InputSpec(shape=input_shape)]
-        self.trainable_weights = [self.W]
-        super(AttLayer, self).build(input_shape)  # be sure you call this somewhere!
-
-    def call(self, x, mask=None):
-        eij = K.tanh(K.dot(x, self.W))
-        
-        ai = K.exp(eij)
-        weights = ai/K.sum(ai, axis=1).dimshuffle(0,'x')
-        
-        weighted_input = x*weights.dimshuffle(0,1,'x')
-        return weighted_input.sum(axis=1)
-
-    def get_output_shape_for(self, input_shape):
-        return (input_shape[0], input_shape[-1])
 
 
 # In[19]:
@@ -82,10 +58,7 @@ if os.path.isfile(filepath):
     model.load_weights(filepath)
 # In[ ]:
 
-texts = pd.read_pickle('../datasets/lstmdata/textsfortoken.pkl')
-tokenizer = Tokenizer(nb_words=None)
-print('load texts tokens sucessfully')
-tokenizer.fit_on_texts(texts)
+tokenizer = pickle.load(open('../datasets/lstmdata/tokenizer.out', 'rb'))
 word_index = tokenizer.word_index
 
 
@@ -113,17 +86,17 @@ embedding_layer = Embedding(len(word_index) + 1,
 
 sentence_input = Input(shape=(MAX_SENT_LEN,), dtype='int32')
 embedded_sequences = embedding_layer(sentence_input)
-l_lstm = Bidirectional(GRU(100, return_sequences=True))(embedded_sequences)
-l_dense = TimeDistributed(Dense(200))(l_lstm)
-l_att = AttLayer()(l_dense)
-sentEncoder = Model(sentence_input, l_att)
+l_lstm = Bidirectional(LSTM(100))(embedded_sequences)
+#l_dense = TimeDistributed(Dense(200))(l_lstm)
+#l_att = AttLayer()(l_dense)
+sentEncoder = Model(sentence_input, l_lstm)
 
 review_input = Input(shape=(MAX_SENTS,MAX_SENT_LEN), dtype='int32')
 review_encoder = TimeDistributed(sentEncoder)(review_input)
-l_lstm_sent = Bidirectional(GRU(100, return_sequences=True))(review_encoder)
-l_dense_sent = TimeDistributed(Dense(200))(l_lstm_sent)
-l_att_sent = AttLayer()(l_dense_sent)
-preds = Dense(1, activation=None)(l_att_sent)
+l_lstm_sent = Bidirectional(LSTM(100))(review_encoder)
+#l_dense_sent = TimeDistributed(Dense(200))(l_lstm_sent)
+#l_att_sent = AttLayer()(l_dense_sent)
+preds = Dense(1, activation=None)(l_lstm_sent)
 model = Model(review_input, preds)
 
 model.compile(loss='mean_squared_error',
@@ -135,7 +108,7 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 5, batch_size=4, callbacks=callbacks_list, verbose=1)
+        nb_epoch = 100, batch_size=16, callbacks=callbacks_list, verbose=1)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
@@ -143,10 +116,12 @@ with open("../datasets/lstmdata/model.json", "w") as json_file:
 # serialize weights to HDF5
 model.save_weights("../datasets/lstmdata/model.h5")
 
+file_history = open('../datasets/lstmdata/history.out','wb')
+pickle.dump(history, file_history)
 # summarize history for accuracy
 fig = plt.figure()
-plt.plot(history.history['mse'])
-plt.plot(history.history['mae'])
+plt.plot(history.history['mean_squared_error'])
+plt.plot(history.history['mean_absolute_error'])
 plt.title('model error')
 plt.ylabel('error')
 plt.xlabel('epoch')

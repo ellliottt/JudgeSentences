@@ -128,8 +128,10 @@ class textfeature():
 		reg.fit(X_train, y_train)
 		y_pre = reg.predict(X_test)
 		self.acc = np.mean((y_pre - y_test) ** 2)
-		print(("Mean squared error for dataset %s on %s : %.4f" % (dataset, model_name, self.acc)))
-		return y_pre
+		acc_train = np.mean((reg.predict(X_train) - y_train) ** 2)
+		print(("Mean squared error for test data %s on %s : %.4f" % (dataset, model_name, self.acc)))
+		print(("Mean squared error for train data %s on %s : %.4f" % (dataset, model_name, acc_train)))
+		return reg
 
 	def plot_scatter(self, y_pre, save_path = '../result/', scale = 1.0, name = 'bow_feature.png'):
 		y_test = np.array(list(self.test_y_dict.values())) * scale
@@ -158,8 +160,9 @@ class textfeature():
 
 
 		## model test
-		y_pre = self.model_pre(model_zoo[model_name], train_total, test_total, dataset = dataset, model_name = model_name)
+		reg = self.model_pre(model_zoo[model_name], train_total, test_total, dataset = dataset, model_name = model_name)
 
+		y_pre = reg.predict(test_total)
 		## plot
 		self.plot_scatter(y_pre, name = plot_name+'_'+model_name+'_'+dataset)
 
@@ -173,19 +176,35 @@ if __name__ == '__main__':
 	ngram_dict = ngrams.load_data('../datasets/grams_dict2002-2016/grams_dict.pkl', format = 'pkl')
 
 	bow_feature = ngrams.load_data('../datasets/grams_dict2002-2016/bow_features.pkl', format = 'pkl')
-	bi_feature = ngrams.load_data('../datasets/grams_dict2002-2016/2grams_feature.pkl', format = 'pkl')
-	tri_feature = ngrams.load_data('../datasets/grams_dict2002-2016/3grams_feature.pkl', format = 'pkl')
-	for_feature = ngrams.load_data('../datasets/grams_dict2002-2016/4grams_feature.pkl', format = 'pkl')
-	fiv_feature = ngrams.load_data('../datasets/grams_dict2002-2016/5grams_feature.pkl', format = 'pkl')
 
 	model_zoo = Counter()
 	model_zoo['OLS'] = linear_model.LinearRegression()
 	model_zoo['PLS'] = cross_decomposition.PLSRegression(n = 200)
 	model_zoo['RF']  = RandomForestRegressor()
 	model_zoo['Elastic Net'] = linear_model.ElasticNet(alpha=0.1, l1_ratio=0.7)
+	features = bow_feature
+	ngrams.process_data(train_data, judge_year_index, features, 
+						  istrain = True)
+	ngrams.process_data(test_data, judge_year_index, features, 
+						  istrain = False)
+	ngrams.get_train_test(features)
+	bow_train, bow_test = ngrams.get_vector()
+	X_train	, X_test = ngrams.get_tfidf(bow_train, bow_test)
+	train_total, test_total = ngrams.combine_data(X_train, X_test)
+
+	cvres = []
+	alphas = np.linspace(0.01,1,50)
+	for a in alphas:
+		ela = ngrams.model_pre(model_zoo['Elastic Net'], train_total, test_total, dataset = 'Holger', model_name='Elastic Net')
+		acc_test = np.mean((ela.predict(X_test) - y_test) ** 2)
+		acc_train = np.mean((ela.predict(X_train) - y_test) ** 2)
+		cvres.append([acc_train, acc_test])
+
+
+
 	
 
-	ngrams.run_model(train_data, test_data, judge_year_index, bow_feature)
+
 
 
 
