@@ -28,8 +28,25 @@ from keras import backend as K
 from keras.engine.topology import Layer, InputSpec
 
 from keras import initializations
+import argparse
 
 import tensorflow as tf
+
+
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-n", "--epochs", default = 100, type=int,
+    help="num of epoch")
+ap.add_argument("-batch", "--batchsize", default = 16,type=int,
+    help="batch size")
+ap.add_argument('-MAX_SENTS', "--MAX_SENTS", default = 200, type=int,
+    help='MAX SENTENCE len')
+ap.add_argument('-EMBEDDING_DIM', "--EMBEDDING_DIM", default = 100, type=int,
+    help='EMBEDDING_DIM')
+args = vars(ap.parse_args())
+
+
+
 
 class AttLayer(Layer):
     def __init__(self, **kwargs):
@@ -71,8 +88,8 @@ print('load datasets sucessfully')
 
 # In[20]:
 
-EMBEDDING_DIM = 100
-MAX_SENTS = 200
+EMBEDDING_DIM = args['EMBEDDING_DIM']
+MAX_SENTS = args['MAX_SENTS']
 MAX_SENT_LEN = 100
 MAX_NB_WORDS = 500000
 
@@ -141,7 +158,10 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 150, batch_size=16, callbacks=callbacks_list, verbose=1)
+        nb_epoch = args['epochs'], batch_size=args['batchsize'], callbacks=callbacks_list, verbose=1)
+
+filep = open('../datasets/lstmdata/history.out', 'wb')
+pickle.dump(tokenizer, filep)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
