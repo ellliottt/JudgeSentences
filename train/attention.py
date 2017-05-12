@@ -51,7 +51,7 @@ class AttLayer(Layer):
         eij = K.tanh(x * self.W + self.b)
         
         ai = K.exp(eij)
-        weights = ai/K.sum(ai, axis=1)
+        weights = ai/tf.expand_dims(K.sum(ai, axis=1),1)
         
         weighted_input = x*weights
         return tf.reduce_sum(weighted_input ,axis=1)
@@ -72,7 +72,7 @@ print('load datasets sucessfully')
 # In[20]:
 
 EMBEDDING_DIM = 100
-MAX_SENTS = 400
+MAX_SENTS = 200
 MAX_SENT_LEN = 100
 MAX_NB_WORDS = 500000
 
@@ -141,7 +141,7 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 150, batch_size=16, callbacks=callbacks_list, verbose=1)
+        nb_epoch = 150, batch_size=2, callbacks=callbacks_list, verbose=1)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
