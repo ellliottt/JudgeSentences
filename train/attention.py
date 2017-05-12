@@ -161,7 +161,7 @@ history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
         nb_epoch = args['epochs'], batch_size=args['batchsize'], callbacks=callbacks_list, verbose=1)
 
 filep = open('../datasets/lstmdata/history.out', 'wb')
-pickle.dump(tokenizer, filep)
+pickle.dump(history.history, filep)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
@@ -171,8 +171,8 @@ model.save_weights("../datasets/lstmdata/model.h5")
 
 # summarize history for accuracy
 fig = plt.figure()
-plt.plot(history.history['mse'])
-plt.plot(history.history['mae'])
+plt.plot(history.history['mean_squared_error'])
+plt.plot(history.history['mean_absolute_error'])
 plt.title('model error')
 plt.ylabel('error')
 plt.xlabel('epoch')
