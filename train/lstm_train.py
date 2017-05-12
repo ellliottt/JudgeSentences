@@ -86,17 +86,17 @@ embedding_layer = Embedding(len(word_index) + 1,
 
 sentence_input = Input(shape=(MAX_SENT_LEN,), dtype='int32')
 embedded_sequences = embedding_layer(sentence_input)
-l_lstm = Bidirectional(LSTM(EMBEDDING_DIM))(embedded_sequences)
+l_lstm = Bidirectional(GRU(EMBEDDING_DIM))(embedded_sequences)
 #l_dense = TimeDistributed(Dense(200))(l_lstm)
 #l_att = AttLayer()(l_dense)
 sentEncoder = Model(sentence_input, l_lstm)
 
 review_input = Input(shape=(MAX_SENTS,MAX_SENT_LEN), dtype='int32')
 review_encoder = TimeDistributed(sentEncoder)(review_input)
-l_lstm_sent = Bidirectional(LSTM(EMBEDDING_DIM))(review_encoder)
+l_lstm_sent = Bidirectional(GRU(EMBEDDING_DIM))(review_encoder)
 #l_dense_sent = TimeDistributed(Dense(200))(l_lstm_sent)
 #l_att_sent = AttLayer()(l_dense_sent)
-preds = Dense(1, activation=None)(l_lstm_sent)
+preds = Dense(1, activation='linear')(l_lstm_sent)
 model = Model(review_input, preds)
 
 model.compile(loss='mean_squared_error',

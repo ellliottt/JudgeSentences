@@ -11,6 +11,7 @@ import os.path
 from glob import glob
 from collections import Counter
 import matplotlib.pyplot as plt
+import pickle
 
 from keras.preprocessing.text import Tokenizer, text_to_word_sequence
 from keras.preprocessing.sequence import pad_sequences
@@ -22,11 +23,13 @@ from keras.layers import Dense, Input, Flatten
 from keras.layers import Conv1D, MaxPooling1D, Embedding, Merge, Dropout, LSTM, GRU, Bidirectional, TimeDistributed
 from keras.models import Model
 
-
+from keras import regularizers
 from keras import backend as K
 from keras.engine.topology import Layer, InputSpec
 
 from keras import initializations
+
+import tensorflow as tf
 
 class AttLayer(Layer):
     def __init__(self, **kwargs):
@@ -36,20 +39,22 @@ class AttLayer(Layer):
 
     def build(self, input_shape):
         assert len(input_shape)==3
-        #self.W = self.init((input_shape[-1],1))
-        self.W = self.init((input_shape[-1],))
+        self.W = self.init([input_shape[-1]])
+        self.b = self.init([1])
+        #self.W = tf.contrib.keras.initializers.RandomNormal()([input_shape[-1]])
+        #self.b = tf.contrib.keras.initializers.RandomNormal()([1])
         #self.input_spec = [InputSpec(shape=input_shape)]
-        self.trainable_weights = [self.W]
+        self.trainable_weights = [self.W, self.b]
         super(AttLayer, self).build(input_shape)  # be sure you call this somewhere!
 
     def call(self, x, mask=None):
-        eij = K.tanh(K.dot(x, self.W))
+        eij = K.tanh(x * self.W + self.b)
         
         ai = K.exp(eij)
-        weights = ai/K.sum(ai, axis=1).dimshuffle(0,'x')
+        weights = ai/K.sum(ai, axis=1)
         
-        weighted_input = x*weights.dimshuffle(0,1,'x')
-        return weighted_input.sum(axis=1)
+        weighted_input = x*weights
+        return tf.reduce_sum(weighted_input ,axis=1)
 
     def get_output_shape_for(self, input_shape):
         return (input_shape[0], input_shape[-1])
@@ -67,7 +72,7 @@ print('load datasets sucessfully')
 # In[20]:
 
 EMBEDDING_DIM = 100
-MAX_SENTS = 200
+MAX_SENTS = 400
 MAX_SENT_LEN = 100
 MAX_NB_WORDS = 500000
 
@@ -81,14 +86,15 @@ filepath="../datasets/lstmdata/weights.best.hdf5"
 if os.path.isfile(filepath):
     model.load_weights(filepath)
 # In[ ]:
-
+'''
 texts = pd.read_pickle('../datasets/lstmdata/textsfortoken.pkl')
 tokenizer = Tokenizer(nb_words=None)
 print('load texts tokens sucessfully')
 tokenizer.fit_on_texts(texts)
 word_index = tokenizer.word_index
-
-
+'''
+tokenizer = pickle.load(open('../datasets/lstmdata/tokenizer.out', 'rb'))
+word_index = tokenizer.word_index
 # In[ ]:
 
 embedding_matrix = np.random.random((len(word_index) + 1, EMBEDDING_DIM))
@@ -135,7 +141,7 @@ callbacks_list = [checkpoint]
 
 print("model fitting - Hierachical attention network")
 history =model.fit(lstm_train, y_train, validation_data=(lstm_test, y_test),
-        nb_epoch = 5, batch_size=4, callbacks=callbacks_list, verbose=1)
+        nb_epoch = 150, batch_size=16, callbacks=callbacks_list, verbose=1)
 
 model_json = model.to_json()
 with open("../datasets/lstmdata/model.json", "w") as json_file:
